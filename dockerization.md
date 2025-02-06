@@ -110,3 +110,7 @@ docker run -d -p 80:80 --name web-prod my-web-prod
 BUILD_STAGE=build docker-compose up -d  # Production
 BUILD_STAGE=dev docker-compose up -d    # Development
 ```
+
+## Reference
+
+You can find in-depth information [here](Dockerization.md).

@@ -2,6 +2,71 @@
 
 The project is a frontend-only ReactJS application with no backend or database integration, making it a 1-tier application. This means it handles the presentation layer (UI/UX) only, without connecting to a backend or database.
 
+> **Note:** This is quite lenghty file, you can read its short version [here](dockerization.md).
+
+Sure, here is the table of contents for the document:
+
+## Table of Contents
+
+1. Dockerizing a ReactJS Project
+2. Project Structure
+3. Project Breakdown
+    - HTML Files (about.html, index.html)
+    - JavaScript File (app.js)
+    - package.json
+4. Where Does This Project Fall?
+5. Comparison to Other Projects
+6. Conclusion
+7. How to Extend This Static Web Project to a Dynamic Web Application
+    - Option 1: Convert to a 2-Tier Web Application (Frontend + Backend)
+        - New Folder Structure (2-Tier)
+        - Key Changes
+        - Code Changes
+            - Backend (server.js)
+            - Frontend (app.js)
+    - Option 2: Convert to a 3-Tier Web Application (Frontend + Backend + Database)
+        - New Folder Structure (3-Tier)
+        - New Components
+        - Code Changes
+            - Connect to Database (database.js)
+            - Define a User Model (models/User.js)
+            - Backend Routes (routes/userRoutes.js)
+            - Frontend API Call (app.js)
+    - Final Comparison
+    - Conclusion
+8. Convert it into 3-Tier JavaScript Web Application
+    - Backend Implementation
+        - Changes I made
+9. Dockerizing the 3-Tier JavaScript Web Application
+    - Single-Stage Dockerfile (Basic)
+        - Dockerfile (Single Build - Nginx)
+    - Multi-Stage Dockerfile (Optimized)
+        - Dockerfile (Multi-Stage - Node.js + Nginx)
+    - Docker Compose (With MongoDB & Frontend)
+        - Dockerfile for Frontend (React)
+    - Which One Should You Use?
+10. Single Dockerfile for Multiple Environments
+    - Single Dockerfile for Multiple Environments
+        - Dockerfile
+    - Build & Run for Different Environments
+        - Build for Development
+        - Build for Production
+    - Using Docker Compose
+        - docker-compose.yml
+    - Run for Different Environments
+    - Summary
+11. Multi-Stage Dockerfile for Different Environments
+    - Multi-Stage Dockerfile for Different Environments
+        - Dockerfile
+    - Building and Running Different Environments
+        - Run in Production Mode
+        - Run in Development Mode
+    - Docker Compose for Environment-Specific Builds
+        - docker-compose.yml
+    - Run for Different Environments
+    - Summary
+    - Multi-Stage Builds Benefits
+
 ## Project Structure
 
 ```text

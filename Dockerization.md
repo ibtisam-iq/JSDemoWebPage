@@ -785,3 +785,240 @@ BUILD_STAGE=dev docker-compose up -d    # Development
 ✅ Use a **single Dockerfile**.
 ✅ Create **separate images** for production & development.
 ✅ Avoid **bloated images** with unnecessary dependencies.
+
+---
+
+## Understanding `npm run build`
+
+```Dockerfile
+FROM node:14-alpine AS build
+ENV APP_HOME=/usr/src/app
+WORKDIR $APP_HOME
+COPY package.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+COPY --from=build /usr/src/app/dist .
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+```json
+{
+  "dependencies": {
+    "express": "*"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "name": "basic-nodejs",
+  "version": "1.0.0",
+  "main": "app.js",
+  "devDependencies": {},
+  "author": "IbtisamOps",
+  "license": "MIT",
+  "description": "NodeJS Project with Expres FrameWork and Running in Docker Container"
+}
+```
+The provided `package.json` file indicates that this is a **Node.js project using Express**. The multi-stage build Dockerfile you provided earlier is specifically for a React application. For a Node.js project with Express, you would need a different Dockerfile.
+
+Here is a Dockerfile suitable for your Node.js Express project:
+
+```dockerfile
+# Stage 1: Build the Node.js application
+FROM node:14-alpine AS build
+
+# Set environment variable for the application home directory
+ENV APP_HOME=/usr/src/app
+
+# Set the working directory inside the container
+WORKDIR $APP_HOME
+
+# Copy the package.json file to the working directory
+COPY package.json ./
+
+# Install the dependencies specified in package.json
+RUN npm install
+
+# Copy the rest of the application code to the working directory
+COPY . .
+
+# Stage 2: Create a lightweight image for running the application
+FROM node:14-alpine
+
+# Set the working directory inside the container
+WORKDIR /usr/src/app
+
+# Copy the built files from the previous stage to the working directory
+COPY --from=build /usr/src/app .
+
+# Expose port 3000 to allow traffic to the Node.js server
+EXPOSE 3000
+
+# Start the Node.js application
+CMD ["npm", "start"]
+```
+
+### Explanation of Directives:
+
+1. **Stage 1: Build the Node.js application**
+   - `FROM node:14-alpine AS build`: Use the official Node.js image based on Alpine Linux for a lightweight build environment. The `AS build` syntax names this stage "build".
+   - `ENV APP_HOME=/usr/src/app`: Set an environment variable for the application home directory.
+   - `WORKDIR $APP_HOME`: Set the working directory inside the container to `$APP_HOME`.
+   - `COPY package.json./`: Copy the package.json file to the working directory to install dependencies.
+   - `RUN npm install`: Install the dependencies specified in package.json.
+   - `COPY . .`: Copy the rest of the application code to the working directory.
+
+2. **Stage 2: Create a lightweight image for running the application**
+   - `FROM node:14-alpine`: Use the official Node.js image based on Alpine Linux for a lightweight runtime environment.
+   - `WORKDIR /usr/src/app`: Set the working directory inside the container to the application home directory.
+   - `COPY --from=build /usr/src/app .`: Copy the built files from the build stage to the working directory.
+   - `EXPOSE 3000`: Expose port 3000 to allow traffic to the Node.js server.
+   - `CMD ["npm", "start"]`: Start the Node.js application using the `npm start` script defined in package.json.
+
+This Dockerfile will work for your Node.js Express project, creating a lightweight image that includes only the necessary files and dependencies to run the application.
+
+---
+
+Using Nginx to serve a Node.js application directly is not typical because Nginx is generally used as a reverse proxy or to serve static files, while Node.js handles dynamic content and application logic. However, you can use Nginx as a reverse proxy to forward requests to your Node.js application running in the background.
+
+Here’s how you can set up a multi-stage Dockerfile to use Nginx as a reverse proxy for your Node.js application:
+
+### Multi-Stage Dockerfile with Nginx as Reverse Proxy
+
+```dockerfile
+# Stage 1: Build the Node.js application
+FROM node:14-alpine AS build
+
+# Set environment variable for the application home directory
+ENV APP_HOME=/usr/src/app
+
+# Set the working directory inside the container
+WORKDIR $APP_HOME
+
+# Copy the package.json and package-lock.json files to the working directory
+COPY package.json package-lock.json ./
+
+# Install the dependencies specified in package.json
+RUN npm install
+
+# Copy the rest of the application code to the working directory
+COPY . .
+
+# Stage 2: Create a lightweight image for running the application with Nginx
+FROM nginx:alpine
+
+# Set the working directory inside the Nginx container
+WORKDIR /usr/src/app
+
+# Copy the built files from the previous stage to the working directory
+COPY --from=build /usr/src/app /usr/src/app
+
+# Copy the custom Nginx configuration file
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80 to allow traffic to the Nginx server
+EXPOSE 80
+
+# Start Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Custom Nginx Configuration File (`nginx.conf`)
+
+Create a file named `nginx.conf` in the same directory as your Dockerfile with the following content:
+
+```nginx
+server {
+    listen 80;
+
+    server_name localhost;
+
+    location / {
+        proxy_pass http://localhost:3000; # Use the Docker service name instead of localhost.
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+```
+
+### Explanation of Directives:
+
+1. **Stage 1: Build the Node.js application**
+   - `FROM node:14-alpine AS build`: Use the official Node.js image based on Alpine Linux for a lightweight build environment. The `AS build` syntax names this stage "build".
+   - `ENV APP_HOME=/usr/src/app`: Set an environment variable for the application home directory.
+   - `WORKDIR $APP_HOME`: Set the working directory inside the container to `$APP_HOME`.
+   - `COPY package.json ./`: Copy the package.json file to the working directory to install dependencies.
+   - `RUN npm install`: Install the dependencies specified in package.json.
+   - `COPY . .`: Copy the rest of the application code to the working directory.
+
+2. **Stage 2: Create a lightweight image for running the application with Nginx**
+   - `FROM nginx:alpine`: Use the official Nginx image based on Alpine Linux for a lightweight web server.
+   - `WORKDIR /usr/src/app`: Set the working directory inside the container to the application home directory.
+   - `COPY --from=build /usr/src/app /usr/src/app`: Copy the built files from the build stage to the working directory.
+   - `COPY nginx.conf /etc/nginx/conf.d/default.conf`: Copy a custom Nginx configuration file to the Nginx configuration directory.
+   - `EXPOSE 80`: Expose port 80 to allow traffic to the Nginx server.
+   - `CMD ["nginx", "-g", "daemon off;"]`: Start Nginx in the foreground to keep the container running.
+
+### Building and Running the Docker Container
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t node-nginx-app .
+   ```
+
+2. **Run the Docker container**:
+   ```bash
+   docker run -p 80:80 node-nginx-app
+   ```
+
+Your Node.js application should now be accessible at `http://localhost`, with Nginx acting as a reverse proxy to forward requests to the Node.js server running on port 3000 inside the container.
+
+---
+
+## Difference Between CMD ["node", "app.js"] and CMD ["npm", "start"] in Docker
+
+### **1. CMD ["node", "app.js"]**
+- Directly runs the **Node.js runtime** with `app.js`.
+- Assumes `app.js` is the main entry point of your application.
+- **Bypasses `npm` scripts** and runs the application without using `package.json`.
+
+### **2. CMD ["npm", "start"]**
+- Runs the command defined under the `"start"` script in `package.json`.
+- Example of `package.json`:
+  
+  ```json
+  {
+    "scripts": {
+      "start": "node app.js"
+    }
+  }
+  ```
+  
+- Allows flexibility to run pre-start scripts or additional environment configurations.
+
+### **Key Differences**
+| Aspect                  | CMD ["node", "app.js"] | CMD ["npm", "start"] |
+|-------------------------|-------------------------|---------------------|
+| Execution Method       | Directly runs Node.js   | Runs via `npm`     |
+| Dependency on package.json | No                     | Yes                 |
+| Flexibility            | Less flexible, runs only `app.js` | More flexible, allows pre-start scripts |
+| Best for               | Production environments | Development, setups with additional scripts |
+
+### **When to Use Which?**
+- **Use `CMD ["node", "app.js"]`** when you want to directly run the Node.js application without dependency on `npm` scripts.
+- **Use `CMD ["npm", "start"]`** when your project relies on environment variables, additional setup, or other `npm` lifecycle scripts.
+
+In most **production** cases, `CMD ["node", "app.js"]` is preferred for a lightweight and direct execution, while `CMD ["npm", "start"]` is useful for development and projects with additional script requirements.
+

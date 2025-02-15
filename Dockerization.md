@@ -818,7 +818,7 @@ CMD ["nginx", "-g", "daemon off;"]
   "version": "1.0.0",
   "main": "app.js",
   "devDependencies": {},
-  "author": "IbtisamOps",
+  "author": "IbtisamX",
   "license": "MIT",
   "description": "NodeJS Project with Expres FrameWork and Running in Docker Container"
 }
